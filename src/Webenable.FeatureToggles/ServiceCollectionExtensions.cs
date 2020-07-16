@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Webenable.FeatureToggles
@@ -24,7 +25,8 @@ namespace Webenable.FeatureToggles
             services.AddFeatureToggleConfiguration<DatabaseFeatureToggleConfiguration>()
                 .AddFeatureToggleConfiguration<ConfigFeatureToggleConfiguration>();
 
-            return services.AddScoped<IFeatureRouter, DefaultFeatureRouter>();
+            services.TryAddScoped<IFeatureRouter, DefaultFeatureRouter>();
+            return services;
         }
 
         /// <summary>
