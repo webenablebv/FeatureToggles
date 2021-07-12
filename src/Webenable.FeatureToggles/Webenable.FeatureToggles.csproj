@@ -3,7 +3,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <VersionPrefix>0.1.2</VersionPrefix>
+    <VersionPrefix>0.1.3</VersionPrefix>
     <Description>Simple feature toggles implementation for ASP.NET Core.</Description>
     <Copyright>Copyright 2020 Webenable, Henk Mollema</Copyright>
     <Authors>Webenable;Henk Mollema</Authors>
@@ -19,6 +19,6 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Dommel" Version="2.1.0" />
+    <PackageReference Include="Dommel" Version="2.3.2" />
   </ItemGroup>
 </Project>
