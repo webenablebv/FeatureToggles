@@ -3,42 +3,41 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace Webenable.FeatureToggles
+namespace Webenable.FeatureToggles;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    /// <summary>
+    /// Adds feature toggle support.
+    /// </summary>
+    public static IServiceCollection AddFeatureToggles(this IServiceCollection services) => AddFeatureToggles(services, configureOptions: null);
+
+    /// <summary>
+    /// Adds feature toggle support.
+    /// </summary>
+    public static IServiceCollection AddFeatureToggles(this IServiceCollection services, Action<FeatureToggleOptions>? configureOptions)
     {
-        /// <summary>
-        /// Adds feature toggle support.
-        /// </summary>
-        public static IServiceCollection AddFeatureToggles(this IServiceCollection services) => AddFeatureToggles(services, configureOptions: null);
-
-        /// <summary>
-        /// Adds feature toggle support.
-        /// </summary>
-        public static IServiceCollection AddFeatureToggles(this IServiceCollection services, Action<FeatureToggleOptions>? configureOptions)
+        if (configureOptions is not null)
         {
-            if (configureOptions is object)
-            {
-                services.Configure(configureOptions);
-            }
-
-            services.AddFeatureToggleConfiguration<DatabaseFeatureToggleConfiguration>()
-                .AddFeatureToggleConfiguration<ConfigFeatureToggleConfiguration>();
-
-            services.TryAddScoped<IFeatureRouter, DefaultFeatureRouter>();
-            return services;
+            services.Configure(configureOptions);
         }
 
-        /// <summary>
-        /// Adds a <see cref="IFeatureToggleConfiguration"/> implementation.
-        /// </summary>
-        public static IServiceCollection AddFeatureToggleConfiguration<T>(this IServiceCollection services) where T : class, IFeatureToggleConfiguration
-            => services.AddScoped<IFeatureToggleConfiguration, T>();
+        services.AddFeatureToggleConfiguration<DatabaseFeatureToggleConfiguration>()
+            .AddFeatureToggleConfiguration<ConfigFeatureToggleConfiguration>();
 
-        /// <summary>
-        /// Adds a service to configure <see cref="FeatureToggleOptions"/> dynamically.
-        /// </summary>
-        public static IServiceCollection AddFeatureToggleOptions<T>(this IServiceCollection services) where T : class, IConfigureOptions<FeatureToggleOptions>
-            => services.AddSingleton<IConfigureOptions<FeatureToggleOptions>, T>();
+        services.TryAddScoped<IFeatureRouter, DefaultFeatureRouter>();
+        return services;
     }
+
+    /// <summary>
+    /// Adds a <see cref="IFeatureToggleConfiguration"/> implementation.
+    /// </summary>
+    public static IServiceCollection AddFeatureToggleConfiguration<T>(this IServiceCollection services) where T : class, IFeatureToggleConfiguration
+        => services.AddScoped<IFeatureToggleConfiguration, T>();
+
+    /// <summary>
+    /// Adds a service to configure <see cref="FeatureToggleOptions"/> dynamically.
+    /// </summary>
+    public static IServiceCollection AddFeatureToggleOptions<T>(this IServiceCollection services) where T : class, IConfigureOptions<FeatureToggleOptions>
+        => services.AddSingleton<IConfigureOptions<FeatureToggleOptions>, T>();
 }
