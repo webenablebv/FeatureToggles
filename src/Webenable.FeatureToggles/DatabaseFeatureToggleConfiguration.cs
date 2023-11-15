@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dommel;
@@ -16,16 +18,29 @@ public class DatabaseFeatureToggleConfiguration(IOptions<FeatureToggleOptions> o
         var factory = options.Value.DbConnectionFactory;
         if (factory is not null)
         {
-            using var con = await factory(cancellationToken);
+            await using var con = await factory(cancellationToken);
             var toggle = await con.FirstOrDefaultAsync<FeatureToggleDto>(x => x.Name == featureName, cancellationToken: cancellationToken);
             if (toggle is not null)
             {
-                return toggle.State == FeatureToggleState.Enabled;
+                return toggle.IsEnabled;
             }
         }
 
         // No database connection configured or feature toggle is not configured
         return null;
+    }
+
+    public override async ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default)
+    {
+        var factory = options.Value.DbConnectionFactory;
+        if (factory is not null)
+        {
+            await using var con = await factory(cancellationToken);
+            var toggles = await con.GetAllAsync<FeatureToggleDto>(cancellationToken: cancellationToken);
+            return toggles.ToDictionary(x => x.Name!, x => x.IsEnabled);
+        }
+
+        return [];
     }
 
     public override int Order => base.Order - 10;
@@ -51,6 +66,9 @@ public class FeatureToggleDto
     /// Gets or sets the state of the feature toggle.
     /// </summary>
     public FeatureToggleState State { get; set; }
+
+    [NotMapped]
+    public bool IsEnabled => State == FeatureToggleState.Enabled;
 }
 
 /// <summary>

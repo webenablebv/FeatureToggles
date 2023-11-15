@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,18 @@ namespace Webenable.FeatureToggles;
 /// </summary>
 public class ConfigFeatureToggleConfiguration(IConfiguration configuration) : FeatureToggleConfiguration
 {
+    public override ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default)
+    {
+        var featureConfig = configuration.GetSection("Features");
+        if (featureConfig == null)
+        {
+            return new ValueTask<Dictionary<string, bool>>([]);
+        }
+
+        var toggles = featureConfig.GetChildren().ToDictionary(x => x.Key, x => bool.TryParse(x.Value, out var b) && b);
+        return new ValueTask<Dictionary<string, bool>>(toggles);
+    }
+
     public override ValueTask<bool?> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default)
     {
         // Resolve the feature section from the configuration.

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Data;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,8 +11,8 @@ namespace Webenable.FeatureToggles;
 public class FeatureToggleOptions
 {
     /// <summary>
-    /// Gets or sets a factory to create a <see cref="IDbConnection"/> to evaluate feature toggles using <see cref="DatabaseFeatureToggleConfiguration"/>.
+    /// Gets or sets a factory to create a <see cref="DbConnection"/> to evaluate feature toggles using <see cref="DatabaseFeatureToggleConfiguration"/>.
     /// Leave null to disable feature toggles in the database.
     /// </summary>
-    public Func<CancellationToken, Task<IDbConnection>>? DbConnectionFactory { get; set; }
+    public Func<CancellationToken, Task<DbConnection>>? DbConnectionFactory { get; set; }
 }

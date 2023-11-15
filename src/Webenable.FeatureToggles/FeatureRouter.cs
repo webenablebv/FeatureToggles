@@ -20,6 +20,13 @@ public interface IFeatureRouter
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to propagate cancellation.</param>
     /// <returns><c>true</c> when the feature is enabled; otherwise, <c>false</c>.</returns>
     ValueTask<bool> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all feature toggles from all the available feature toggle configurations.
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> to propagate cancellation.</param>
+    /// <returns>A dictionary with configured feature toggles and whether they're enabled or not.</returns>
+    ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -58,5 +65,22 @@ public class DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featu
 
         // No provider configured this feature
         return false;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, bool>();
+        foreach (var featureToggleConfiguration in featureToggleConfiguration.OrderBy(f => f.Order))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var toggles = await featureToggleConfiguration.GetAll(cancellationToken);
+            foreach (var toggle in toggles)
+            {
+                result[toggle.Key] = toggle.Value;
+            }
+        }
+        return result;
     }
 }

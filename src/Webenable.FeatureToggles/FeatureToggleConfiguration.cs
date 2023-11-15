@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Webenable.FeatureToggles;
@@ -20,6 +21,13 @@ public interface IFeatureToggleConfiguration
     ValueTask<bool?> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves all feature toggles in the configuration.
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> to propagate cancellation.</param>
+    /// <returns>A dictionary with configured feature toggles and whether they're enabled or not.</returns>
+    ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// The order which is used when evaluating feature toggles using a <see cref="IFeatureRouter"/>.
     /// </summary>
     int Order { get; }
@@ -32,6 +40,9 @@ public abstract class FeatureToggleConfiguration : IFeatureToggleConfiguration
 {
     /// <inheritdoc/>
     public abstract ValueTask<bool?> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default);
+
+    /// <inheritdoc/>
+    public abstract ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default);
 
     /// <inheritdoc/>
     public virtual int Order { get; } = 1000;
