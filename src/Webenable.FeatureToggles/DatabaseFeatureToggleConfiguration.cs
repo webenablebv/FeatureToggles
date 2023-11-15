@@ -9,18 +9,11 @@ namespace Webenable.FeatureToggles;
 /// <summary>
 /// Evaluates feature toggles against <see cref="FeatureToggleDto"/> records the database.
 /// </summary>
-public class DatabaseFeatureToggleConfiguration : FeatureToggleConfiguration
+public class DatabaseFeatureToggleConfiguration(IOptions<FeatureToggleOptions> options) : FeatureToggleConfiguration
 {
-    private readonly FeatureToggleOptions _options;
-
-    public DatabaseFeatureToggleConfiguration(IOptions<FeatureToggleOptions> options)
-    {
-        _options = options.Value;
-    }
-
     public override async ValueTask<bool?> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default)
     {
-        var factory = _options.DbConnectionFactory;
+        var factory = options.Value.DbConnectionFactory;
         if (factory is not null)
         {
             using var con = await factory(cancellationToken);

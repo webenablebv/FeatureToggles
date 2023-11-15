@@ -8,20 +8,13 @@ namespace Webenable.FeatureToggles;
 /// <summary>
 /// Evaluates feature toggles against <see cref="IConfiguration"/> of the application.
 /// </summary>
-public class ConfigFeatureToggleConfiguration : FeatureToggleConfiguration
+public class ConfigFeatureToggleConfiguration(IConfiguration configuration) : FeatureToggleConfiguration
 {
-    private readonly IConfiguration _configuration;
-
-    public ConfigFeatureToggleConfiguration(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
     public override ValueTask<bool?> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default)
     {
         // Resolve the feature section from the configuration.
         var configKey = GetConfigKey(featureName);
-        var section = _configuration.GetSection(configKey);
+        var section = configuration.GetSection(configKey);
         if (section.Value != null)
         {
             // "Foo": true
@@ -30,7 +23,7 @@ public class ConfigFeatureToggleConfiguration : FeatureToggleConfiguration
 
         if (section.GetSection("Enabled").Exists())
         {
-            // Feature is explictly enabled or disabled.
+            // Feature is explicitly enabled or disabled.
             // "Foo": {
             //   "Enabled": true,
             //   "Bar": { }

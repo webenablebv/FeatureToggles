@@ -33,15 +33,8 @@ public interface IFeatureRouter
 /// a certain feature toggle specified, <c>false</c> is returned.
 /// </para>
 /// </summary>
-public class DefaultFeatureRouter : IFeatureRouter
+public class DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featureToggleConfiguration) : IFeatureRouter
 {
-    private readonly IEnumerable<IFeatureToggleConfiguration> _featureToggleConfiguration;
-
-    public DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featureToggleConfiguration)
-    {
-        _featureToggleConfiguration = featureToggleConfiguration;
-    }
-
     /// <inheritdoc/>
     public async ValueTask<bool> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default)
     {
@@ -51,7 +44,7 @@ public class DefaultFeatureRouter : IFeatureRouter
         }
 
         // The feature toggle providers are invoked in the specified order
-        foreach (var featureToggleConfiguration in _featureToggleConfiguration.OrderBy(f => f.Order))
+        foreach (var featureToggleConfiguration in featureToggleConfiguration.OrderBy(f => f.Order))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
