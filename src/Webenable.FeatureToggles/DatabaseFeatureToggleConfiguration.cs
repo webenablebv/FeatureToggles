@@ -11,10 +11,12 @@ namespace Webenable.FeatureToggles;
 /// <summary>
 /// Evaluates feature toggles against <see cref="FeatureToggleDto"/> records the database.
 /// </summary>
-public class DatabaseFeatureToggleConfiguration(IOptions<FeatureToggleOptions> options) : FeatureToggleConfiguration
+public class DatabaseFeatureToggleConfiguration(IOptions<FeatureToggleOptions> options, FeatureToggleUserContext? userContext = null) : FeatureToggleConfiguration
 {
     public override async ValueTask<bool?> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        var emailAddress = userContext?.EmailAddress;
         var factory = options.Value.DbConnectionFactory;
         if (factory is not null)
         {
@@ -22,6 +24,11 @@ public class DatabaseFeatureToggleConfiguration(IOptions<FeatureToggleOptions> o
             var toggle = await con.FirstOrDefaultAsync<FeatureToggleDto>(x => x.Name == featureName, cancellationToken: cancellationToken);
             if (toggle is not null)
             {
+                if (toggle.State == FeatureToggleState.Beta && !string.IsNullOrWhiteSpace(emailAddress))
+                {
+                    var emails = await con.SelectAsync<FeatureToggleEmailDto>(x => x.FeatureToggleId == toggle.Id, cancellationToken: cancellationToken);
+                    return FeatureToggleEmailMatcher.Contains(emails.Select(x => x.EmailAddress), emailAddress);
+                }
                 return toggle.IsEnabled;
             }
         }
@@ -78,4 +85,15 @@ public enum FeatureToggleState
 {
     Disabled = 0,
     Enabled = 1,
+    /// <summary>Enabled only for addresses in the FeatureToggleEmails table.</summary>
+    Beta = 2,
+}
+
+/// <summary>An email address allowed to use a beta feature.</summary>
+[Table("FeatureToggleEmails")]
+public class FeatureToggleEmailDto
+{
+    public int Id { get; set; }
+    public int FeatureToggleId { get; set; }
+    public string? EmailAddress { get; set; }
 }

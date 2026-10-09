@@ -17,11 +17,13 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddFeatureToggles(this IServiceCollection services, Action<FeatureToggleOptions>? configureOptions)
     {
+        services.AddOptions<FeatureToggleOptions>();
         if (configureOptions is not null)
         {
             services.Configure(configureOptions);
         }
 
+        services.TryAddScoped<FeatureToggleUserContext>();
         services.AddFeatureToggleConfiguration<DatabaseFeatureToggleConfiguration>()
             .AddFeatureToggleConfiguration<ConfigFeatureToggleConfiguration>();
 
