@@ -17,12 +17,14 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddFeatureToggles(this IServiceCollection services, Action<FeatureToggleOptions>? configureOptions)
     {
-        services.AddOptions<FeatureToggleOptions>();
+        services.AddOptions<FeatureToggleOptions>()
+            .Validate(options => options.CacheDuration > TimeSpan.Zero, $"{nameof(FeatureToggleOptions.CacheDuration)} must be greater than zero.");
         if (configureOptions is not null)
         {
             services.Configure(configureOptions);
         }
 
+        services.AddMemoryCache();
         services.TryAddScoped<FeatureToggleUserContext>();
         services.AddFeatureToggleConfiguration<DatabaseFeatureToggleConfiguration>()
             .AddFeatureToggleConfiguration<ConfigFeatureToggleConfiguration>();

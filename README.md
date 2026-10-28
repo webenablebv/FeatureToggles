@@ -1,6 +1,19 @@
 # FeatureToggles
 Simple feature toggles implementation for ASP.NET Core.
 
+## Caching
+
+Feature evaluations and `GetAll` results are cached in memory for two minutes by default. Configure a different duration when registering feature toggles:
+
+```csharp
+services.AddFeatureToggles(options =>
+{
+    options.CacheDuration = TimeSpan.FromSeconds(30);
+});
+```
+
+The duration must be greater than zero. User-specific evaluations use the normalized email address from `FeatureToggleUserContext` as part of the cache key.
+
 ## Beta groups by email
 
 Keep a feature globally disabled and allow specific email addresses:

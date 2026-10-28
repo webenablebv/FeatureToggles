@@ -11,6 +11,11 @@ namespace Webenable.FeatureToggles;
 public class FeatureToggleOptions
 {
     /// <summary>
+    /// Gets or sets how long evaluated feature toggle values are cached.
+    /// </summary>
+    public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(2);
+
+    /// <summary>
     /// Gets or sets a factory to create a <see cref="DbConnection"/> to evaluate feature toggles using <see cref="DatabaseFeatureToggleConfiguration"/>.
     /// Leave null to disable feature toggles in the database.
     /// </summary>

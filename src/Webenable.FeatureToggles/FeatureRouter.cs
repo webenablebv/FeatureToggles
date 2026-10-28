@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace Webenable.FeatureToggles;
 
@@ -40,8 +42,16 @@ public interface IFeatureRouter
 /// a certain feature toggle specified, <c>false</c> is returned.
 /// </para>
 /// </summary>
-public class DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featureToggleConfiguration) : IFeatureRouter
+public class DefaultFeatureRouter(
+    IEnumerable<IFeatureToggleConfiguration> featureToggleConfigurations,
+    IMemoryCache cache,
+    IOptions<FeatureToggleOptions> options,
+    FeatureToggleUserContext? userContext = null) : IFeatureRouter
 {
+    private static readonly object GetAllCacheKey = new();
+    private readonly IFeatureToggleConfiguration[] orderedFeatureToggleConfigurations =
+        featureToggleConfigurations.OrderBy(configuration => configuration.Order).ToArray();
+
     /// <inheritdoc/>
     public async ValueTask<bool> IsEnabledAsync(string featureName, CancellationToken cancellationToken = default)
     {
@@ -50,8 +60,16 @@ public class DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featu
             throw new ArgumentNullException(nameof(featureName));
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
+        var cacheDuration = options.Value.CacheDuration;
+        var cacheKey = new FeatureCacheKey(featureName, NormalizeEmailAddress(userContext?.EmailAddress));
+        if (cache.TryGetValue(cacheKey, out bool cachedResult))
+        {
+            return cachedResult;
+        }
+
         // The feature toggle providers are invoked in the specified order
-        foreach (var featureToggleConfiguration in featureToggleConfiguration.OrderBy(f => f.Order))
+        foreach (var featureToggleConfiguration in orderedFeatureToggleConfigurations)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -59,19 +77,28 @@ public class DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featu
             var enabled = await featureToggleConfiguration.IsEnabledAsync(featureName, cancellationToken);
             if (enabled.HasValue)
             {
+                cache.Set(cacheKey, enabled.Value, cacheDuration);
                 return enabled.Value;
             }
         }
 
         // No provider configured this feature
+        cache.Set(cacheKey, false, cacheDuration);
         return false;
     }
 
     /// <inheritdoc/>
     public async ValueTask<Dictionary<string, bool>> GetAll(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        var cacheDuration = options.Value.CacheDuration;
+        if (cache.TryGetValue(GetAllCacheKey, out Dictionary<string, bool>? cachedResult) && cachedResult is not null)
+        {
+            return new Dictionary<string, bool>(cachedResult);
+        }
+
         var result = new Dictionary<string, bool>();
-        foreach (var featureToggleConfiguration in featureToggleConfiguration.OrderBy(f => f.Order))
+        foreach (var featureToggleConfiguration in orderedFeatureToggleConfigurations)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -81,6 +108,13 @@ public class DefaultFeatureRouter(IEnumerable<IFeatureToggleConfiguration> featu
                 result[toggle.Key] = toggle.Value;
             }
         }
+
+        cache.Set(GetAllCacheKey, new Dictionary<string, bool>(result), cacheDuration);
         return result;
     }
+
+    private static string? NormalizeEmailAddress(string? emailAddress)
+        => string.IsNullOrWhiteSpace(emailAddress) ? null : emailAddress.Trim().ToUpperInvariant();
+
+    private readonly record struct FeatureCacheKey(string FeatureName, string? EmailAddress);
 }
