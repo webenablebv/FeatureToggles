@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+        source-url: https://nuget.pkg.github.com/webenablebv/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Create the package
+      run: dotnet pack -c Release -o ./artifacts --version-suffix=beta.$GITHUB_RUN_NUMBER
+    - name: Publish the package to GPR
+      run: dotnet nuget push ./artifacts/*.nupkg -k ${{secrets.NUGET_PUSH_PAT}}

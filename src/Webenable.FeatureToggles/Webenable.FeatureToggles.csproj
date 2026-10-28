@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <VersionPrefix>2.0.1</VersionPrefix>
+    <VersionPrefix>2.0.0</VersionPrefix>
     <Description>Simple feature toggles implementation for ASP.NET Core.</Description>
-    <Copyright>Copyright 2020 Webenable, Henk Mollema</Copyright>
+    <Copyright>Copyright 2026 Webenable, Henk Mollema</Copyright>
     <Authors>Webenable;Henk Mollema</Authors>
     <Company>Webenable</Company>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
@@ -19,6 +19,6 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Dommel" Version="3.2.0" />
+    <PackageReference Include="Dommel" Version="3.5.3" />
   </ItemGroup>
 </Project>
